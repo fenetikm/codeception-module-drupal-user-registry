@@ -1,5 +1,5 @@
 {
-    "name": "ixis/codeception-module-drupal-user-registry",
+    "name": "fenetikm/codeception-module-drupal-user-registry",
     "description": "A Codeception module for managing test users.",
     "license": "MIT",
     "authors": [
@@ -15,18 +15,18 @@
             "name": "Andy Rigby",
             "email": "andy.rigby@ixis.co.uk",
             "homepage": "http://www.ixis.co.uk/"
+        },
+        {
+            "name": "Michael Welford"
         }
     ],
-
     "require": {
         "php": ">=5.4.0",
-        "codeception/codeception": "~2.1.0"
+        "codeception/codeception": "2.*"
     },
-
     "require-dev": {
         "codegyre/robo": "~0.5.2"
     },
-
     "autoload": {
         "psr-4": {
             "Codeception\\Module\\": "src"
