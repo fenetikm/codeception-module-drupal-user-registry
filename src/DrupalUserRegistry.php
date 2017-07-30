@@ -33,6 +33,7 @@ use Codeception\Module\Drupal\UserRegistry\Storage\StorageInterface;
  *             create: true                 # Whether to create all defined test users at the start of the suite.
  *             delete: true                 # Whether to delete all defined test users at the end of the suite.
  *             drush-alias: '@mysite.local' # The Drush alias to use when managing users via DrushTestUserManager.
+ *             drush: 'bin/drush' # The location of the drush command to use.
  *
  */
 class DrupalUserRegistry extends Module
