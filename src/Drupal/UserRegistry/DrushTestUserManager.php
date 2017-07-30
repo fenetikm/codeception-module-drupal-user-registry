@@ -36,6 +36,12 @@ class DrushTestUserManager implements TestUserManagerInterface
     protected $output;
 
     /**
+     * @var string
+     *   The drush command to use.
+     */
+    protected $drushCommand;
+
+    /**
      * Constructor: ensure we have all the configuration values we need and store them.
      *
      * @param array $config
@@ -49,10 +55,9 @@ class DrushTestUserManager implements TestUserManagerInterface
     {
         $this->storage = $storage;
 
-        if (!isset($config['drush-alias'])) {
-            throw new ConfigurationException("Please configure the drush-alias setting in your suite configuration.");
-        }
-        $this->alias = $config['drush-alias'];
+        $this->alias = $config['drush-alias'] ?? NULL;
+        $this->drushCommand = $config['drush'] ?? 'drush';
+
         $this->output = new Output(array());
     }
 
@@ -90,12 +95,12 @@ class DrushTestUserManager implements TestUserManagerInterface
             $email = $user->email;
         }
 
-        Debug::debug("Trying to create test user '{$user->name}' with email '{$email}' on '{$this->alias}'.");
+        Debug::debug("Trying to create test user '{$user->name}' with email '{$email}'.");
 
         if ($this->userExists($user->name)) {
             if (!$user->isRoot) {
                 $this->message(
-                    "User '{$user->name}' already exists on {$this->alias}, skipping.",
+                    "User '{$user->name}' already exists, skipping.",
                     new Output(array())
                 )->writeln();
             }
@@ -104,13 +109,13 @@ class DrushTestUserManager implements TestUserManagerInterface
             if ($user->isRoot) {
                 $this->message(
                     "Warning: The user '{$user->name}' specified as 'root' " .
-                    "does not exist on {$this->alias}. The root user should " .
+                    "does not exist. The root user should " .
                     "be the user with UID=1"
                 );
                 return;
             }
             // Create the user.
-            $this->message("Creating test user '{$user->name}' on {$this->alias}.")->writeln();
+            $this->message("Creating test user '{$user->name}'.")->writeln();
             $this->runDrush(
                 sprintf(
                     "user-create %s --mail=%s --password=%s",
@@ -158,7 +163,7 @@ class DrushTestUserManager implements TestUserManagerInterface
             return;
         }
 
-        $this->message("Deleting test user '{$user->name}' on {$this->alias}.")->writeln();
+        $this->message("Deleting test user '{$user->name}'.")->writeln();
         $this->runDrush(
             sprintf(
                 "user-cancel %s --delete-content",
@@ -188,26 +193,9 @@ class DrushTestUserManager implements TestUserManagerInterface
      */
     public function userExists($username)
     {
-        $jsonOutput = $this->runDrush("user-information " . escapeshellarg($username) . " --format=json");
+        $output = $this->runDrush("sqlq 'select count(uid) from users_field_data where name = \"" . $username . "\"'");
 
-        if (!is_array($jsonOutput)) {
-            throw new ModuleException(__CLASS__, "Response from Drush was not an array as expected.");
-        }
-
-        $jsonResult = array_pop($jsonOutput);
-        $jsonUser = json_decode($jsonResult, true);
-
-        if (!is_null($jsonUser)) {
-            $jsonUser = array_pop($jsonUser);
-            if (isset($jsonUser["name"]) && $jsonUser["name"] == $username) {
-                // This test user already exists.
-                return true;
-            } else {
-                throw new ModuleException(__CLASS__, "Drush returned a user but the username did not match.");
-            }
-        }
-
-        return false;
+        return !($output[0] === '0');
     }
 
     /**
@@ -243,7 +231,10 @@ class DrushTestUserManager implements TestUserManagerInterface
      */
     protected function prepareDrushCommand($cmd)
     {
-        $baseCmd = sprintf("drush -y %s", escapeshellarg($this->alias));
+        $baseCmd = $this->drushCommand . " -y";
+        if ($this->alias !== NULL) {
+          $baseCmd .= escapeshellarg($this->alias);
+        }
         $cmd = "$baseCmd $cmd";
         Debug::debug($cmd);
         return $cmd;
