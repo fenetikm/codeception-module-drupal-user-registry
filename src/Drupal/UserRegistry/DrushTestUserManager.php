@@ -2,7 +2,6 @@
 
 namespace Codeception\Module\Drupal\UserRegistry;
 
-use Codeception\Exception\ConfigurationException;
 use Codeception\Exception\ModuleException;
 use Codeception\Lib\Console\Message;
 use Codeception\Lib\Console\Output;
@@ -49,7 +48,6 @@ class DrushTestUserManager implements TestUserManagerInterface
      * @param StorageInterface $storage
      *   Storage object for the list of users/roles.
      *
-     * @throws ConfigurationException
      */
     public function __construct($config, StorageInterface $storage)
     {
@@ -100,9 +98,8 @@ class DrushTestUserManager implements TestUserManagerInterface
         if ($this->userExists($user->name)) {
             if (!$user->isRoot) {
                 $this->message(
-                    "User '{$user->name}' already exists, skipping.",
-                    new Output(array())
-                )->writeln();
+                    "User '{$user->name}' already exists, skipping."
+                );
             }
         } else {
             // Do not try to create the root user. This should exist as UID=1.
@@ -130,7 +127,7 @@ class DrushTestUserManager implements TestUserManagerInterface
                 if ($role != "Authenticated") {
                     $this->runDrush(
                         sprintf(
-                            "user-add-role %s --name=%s",
+                            "user-add-role %s %s",
                             escapeshellarg($role),
                             escapeshellarg($user->name)
                         )
@@ -193,7 +190,12 @@ class DrushTestUserManager implements TestUserManagerInterface
      */
     public function userExists($username)
     {
-        $output = $this->runDrush("sqlq 'select count(uid) from users_field_data where name = \"" . $username . "\"'");
+        $output = $this->runDrush(
+            sprintf(
+                "sqlq 'SELECT COUNT(uid) FROM users_field_data WHERE name = \"%s\"'",
+                escapeshellarg($username)
+            )
+        );
 
         return !($output[0] === '0');
     }
