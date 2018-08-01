@@ -1,5 +1,5 @@
 {
-    "name": "singularo/codeception-module-drupal-user-registry",
+    "name": "fenetikm/codeception-module-drupal-user-registry",
     "description": "A Codeception module for managing test users.",
     "license": "MIT",
     "authors": [
